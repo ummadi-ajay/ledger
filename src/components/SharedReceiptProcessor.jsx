@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileImage, Loader, CheckCircle } from 'lucide-react';
-import { createWorker } from 'tesseract.js';
+import { X, FileImage, Loader, CheckCircle, Sparkles } from 'lucide-react';
+import { analyzeReceipt } from '../services/gemini';
 import { CATEGORIES } from '../utils';
 
 const SharedReceiptProcessor = ({ sharedFile, onExtracted, onDismiss }) => {
-    const [status, setStatus] = useState('processing'); // processing, success, error
+    const [status, setStatus] = useState('processing');
     const [preview, setPreview] = useState(null);
     const [extractedData, setExtractedData] = useState(null);
 
@@ -17,7 +17,6 @@ const SharedReceiptProcessor = ({ sharedFile, onExtracted, onDismiss }) => {
     const processReceipt = async () => {
         if (!sharedFile) return;
 
-        // Create preview
         const reader = new FileReader();
         reader.onload = (e) => setPreview(e.target.result);
         reader.readAsDataURL(sharedFile);
@@ -25,72 +24,21 @@ const SharedReceiptProcessor = ({ sharedFile, onExtracted, onDismiss }) => {
         setStatus('processing');
 
         try {
-            // OCR with Tesseract.js
-            const worker = await createWorker('eng');
-            const { data: { text } } = await worker.recognize(sharedFile);
-            await worker.terminate();
-
-            // Parse the extracted text
-            const result = parseReceiptText(text);
+            // Use Gemini AI for super-accurate scanning
+            const result = await analyzeReceipt(sharedFile);
             setExtractedData(result);
             setStatus('success');
 
-            // Auto-submit after a short delay
             setTimeout(() => {
                 onExtracted(result);
-            }, 1500);
+            }, 2000);
 
         } catch (error) {
-            console.error('Receipt processing error:', error);
+            console.error('Gemini processing error:', error);
             setStatus('error');
         }
     };
 
-    const parseReceiptText = (text) => {
-        const lowerText = text.toLowerCase();
-        let amount = 0;
-        let category = '';
-        let isExpense = true;
-        let description = '';
-
-        // Extract amount - look for currency patterns
-        const amountMatches = text.match(/(?:₹|Rs\.?|INR)?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g);
-        if (amountMatches) {
-            const amounts = amountMatches.map(a => parseFloat(a.replace(/[₹Rs.,INR\s]/g, '')));
-            const currentYear = new Date().getFullYear();
-            const likelyAmounts = amounts.filter(a => ![currentYear, currentYear - 1].includes(a) && a > 0);
-            if (likelyAmounts.length > 0) amount = Math.max(...likelyAmounts);
-        }
-
-        // Determine if income or expense
-        if (lowerText.includes('received') || lowerText.includes('credited') || lowerText.includes('income')) {
-            isExpense = false;
-        }
-
-        // Try to find category
-        for (const cat of CATEGORIES) {
-            if (lowerText.includes(cat.toLowerCase())) {
-                category = cat;
-                break;
-            }
-        }
-
-        // Extract possible merchant/description
-        const lines = text.split('\n').filter(l => l.trim());
-        if (lines.length > 0) {
-            // First meaningful line is often the merchant name
-            description = lines.find(l => l.length > 3 && l.length < 40 && !/^\d+$/.test(l.trim())) || '';
-        }
-
-        return {
-            amount,
-            amountIn: isExpense ? 0 : amount,
-            amountOut: isExpense ? amount : 0,
-            category,
-            description: description.trim(),
-            isExpense
-        };
-    };
 
     if (!sharedFile) return null;
 
