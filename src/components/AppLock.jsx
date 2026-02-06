@@ -26,13 +26,10 @@ const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
             const isEnabled = localStorage.getItem('biometrics_enabled') === 'true';
 
             if (isEnabled) {
-                // Simplified "get" request for biometric verification
-                // Note: In a real PWA, this would use a challenge from a server, 
-                // but for a local lock, we're checking device possession.
+                // Request biometric verification
                 await navigator.credentials.get({
                     publicKey: {
-                        challenge: new Uint8Array([1, 2, 3, 4]), // Dummy challenge
-                        allowCredentials: [],
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
                         userVerification: "required"
                     }
                 });
@@ -42,26 +39,31 @@ const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
                 // First time setup - register biometrics
                 const credential = await navigator.credentials.create({
                     publicKey: {
-                        challenge: new Uint8Array([1, 2, 3, 4]),
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
                         rp: { name: "Transaction Ledger" },
                         user: {
-                            id: new Uint8Array([1, 2, 3, 4]),
-                            name: "User",
-                            displayName: "User"
+                            id: crypto.getRandomValues(new Uint8Array(16)),
+                            name: "ledger-user",
+                            displayName: "Ledger User"
                         },
                         pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-                        authenticatorSelection: { userVerification: "required" }
+                        authenticatorSelection: {
+                            userVerification: "required",
+                            residentKey: "preferred"
+                        }
                     }
                 });
 
                 if (credential) {
                     localStorage.setItem('biometrics_enabled', 'true');
-                    alert("Biometrics enabled successfully!");
+                    onUnlock(); // UNLOCK IMMEDIATELY AFTER SETUP
                 }
             }
         } catch (err) {
             console.log("Biometric error:", err);
-            // If they cancel, they just use the PIN
+            if (err.name !== 'NotAllowedError') {
+                alert("Biometric failed: " + err.message);
+            }
         }
     };
 
