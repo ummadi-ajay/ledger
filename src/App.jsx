@@ -15,6 +15,8 @@ import WalletManager from './components/WalletManager';
 import SubscriptionManager from './components/SubscriptionManager';
 import DebtManager from './components/DebtManager';
 import PortfolioManager from './components/PortfolioManager';
+import InstallPrompt from './components/InstallPrompt';
+import UpdateNotification from './components/UpdateNotification';
 import { ArrowUp, ArrowDown, Wallet, Layers, ChevronRight } from 'lucide-react';
 import './App.css';
 
@@ -183,6 +185,10 @@ const LedgerApp = () => {
         )}
 
         <Footer activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        {/* PWA Components */}
+        <InstallPrompt />
+        <UpdateNotification />
       </div>
     </>
   );
