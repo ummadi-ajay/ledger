@@ -81,7 +81,12 @@ const LedgerApp = () => {
 
         {activeTab === 'overview' && (
           <div className="overview-grid">
-            {/* Main Content: Stats & Analysis */}
+            {/* Sidebar: Entry Form on Left */}
+            <aside className="sidebar-section">
+              <TransactionForm onAdd={addTransaction} />
+            </aside>
+
+            {/* Main Content: Stats & Analysis on Right */}
             <main className="main-content-section">
               {/* Top Stats Cards */}
               <div className="summary-grid">
@@ -135,11 +140,6 @@ const LedgerApp = () => {
                 />
               </div>
             </main>
-
-            {/* Sidebar: Entry Form on Right */}
-            <aside className="sidebar-section">
-              <TransactionForm onAdd={addTransaction} />
-            </aside>
           </div>
         )}
 

@@ -398,7 +398,7 @@ tr:hover td {
 /* Dashboard Layout */
 .overview-grid {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 320px 1fr;
     gap: 2.5rem;
     align-items: start;
     margin-top: 1rem;
@@ -459,21 +459,14 @@ tbody td {
 /* Mobile Adjustments */
 @media (max-width: 1100px) {
     .overview-grid {
-        grid-template-columns: 1fr;
         display: flex;
         flex-direction: column;
     }
 
     .sidebar-section {
-        order: -1;
-        /* Move Add Transaction to top */
         position: relative;
         top: 0;
         margin-bottom: 2rem;
-    }
-
-    .main-content-section {
-        order: 1;
     }
 }
 
