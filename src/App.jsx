@@ -39,8 +39,26 @@ const LedgerApp = () => {
     endDate: ''
   });
   const [activeTab, setActiveTab] = useState('overview');
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
+
+  const handleStartEdit = (transaction) => {
+    setEditingTransaction(transaction);
+    // Scroll to form on mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveEdit = async (updatedData) => {
+    if (editingTransaction) {
+      await editTransaction({ ...updatedData, id: editingTransaction.id });
+      setEditingTransaction(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTransaction(null);
+  };
 
   if (!currentUser) {
     return <Auth />;
@@ -83,7 +101,12 @@ const LedgerApp = () => {
           <div className="overview-grid">
             {/* Sidebar: Entry Form on Left */}
             <aside className="sidebar-section">
-              <TransactionForm onAdd={addTransaction} />
+              <TransactionForm
+                onAdd={addTransaction}
+                editingTransaction={editingTransaction}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={handleCancelEdit}
+              />
             </aside>
 
             {/* Main Content: Stats & Analysis on Right */}
@@ -134,7 +157,7 @@ const LedgerApp = () => {
                 <SearchFilters filters={filters} setFilters={setFilters} />
                 <TransactionTable
                   transactions={filteredTransactions}
-                  onEdit={editTransaction}
+                  onEdit={handleStartEdit}
                   onDelete={deleteTransaction}
                   isPrivacyMode={isPrivacyMode}
                 />

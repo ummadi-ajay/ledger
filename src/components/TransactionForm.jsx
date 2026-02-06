@@ -1,12 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { Plus, Calendar, Pen, Tag, ArrowDown, ArrowUp, Mic, MicOff, Camera, Loader2, Wallet, MapPin } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, Calendar, Pen, Tag, ArrowDown, ArrowUp, Mic, MicOff, Camera, Loader2, Wallet, MapPin, X, Save } from 'lucide-react';
 import { CATEGORIES } from '../utils';
 import { createWorker } from 'tesseract.js';
 import { useWallets } from '../hooks/useWallets';
 
-const TransactionForm = ({ onAdd }) => {
+const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }) => {
     const { wallets } = useWallets();
-    const [formData, setFormData] = useState({
+    const isEditing = !!editingTransaction;
+
+    const getInitialFormData = () => ({
         date: new Date().toISOString().split('T')[0],
         description: '',
         category: '',
@@ -15,6 +17,25 @@ const TransactionForm = ({ onAdd }) => {
         amountOut: '',
         location: null
     });
+
+    const [formData, setFormData] = useState(getInitialFormData());
+
+    // Populate form when editing
+    useEffect(() => {
+        if (editingTransaction) {
+            setFormData({
+                date: editingTransaction.date || new Date().toISOString().split('T')[0],
+                description: editingTransaction.description || '',
+                category: editingTransaction.category || '',
+                walletId: editingTransaction.walletId || '',
+                amountIn: editingTransaction.amountIn || '',
+                amountOut: editingTransaction.amountOut || '',
+                location: editingTransaction.location || null
+            });
+        } else {
+            setFormData(getInitialFormData());
+        }
+    }, [editingTransaction]);
 
     const [isListening, setIsListening] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
@@ -42,20 +63,25 @@ const TransactionForm = ({ onAdd }) => {
             selectedWalletId = primary ? primary.id : wallets[0].id;
         }
 
-        onAdd({
+        const transactionData = {
             ...formData,
             walletId: selectedWalletId,
             amountIn: inAmt,
             amountOut: outAmt,
-        });
+        };
 
-        setFormData({
-            ...formData,
-            description: '',
-            amountIn: '',
-            amountOut: '',
-            location: null
-        });
+        if (isEditing) {
+            onSaveEdit(transactionData);
+        } else {
+            onAdd(transactionData);
+        }
+
+        setFormData(getInitialFormData());
+    };
+
+    const handleCancel = () => {
+        setFormData(getInitialFormData());
+        if (onCancelEdit) onCancelEdit();
     };
 
     const startListening = () => {
@@ -167,10 +193,12 @@ const TransactionForm = ({ onAdd }) => {
         <section className="glass-card animate-fade-in" style={{ padding: '1.25rem' }}>
             <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ background: 'var(--accent-primary)', padding: '6px', borderRadius: '50%', color: 'white' }}>
-                        <Plus size={16} strokeWidth={3} />
+                    <div style={{ background: isEditing ? 'var(--warning)' : 'var(--accent-primary)', padding: '6px', borderRadius: '50%', color: 'white' }}>
+                        {isEditing ? <Pen size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
                     </div>
-                    <h2 style={{ fontSize: '1rem', fontWeight: '850', color: 'var(--text-primary)' }}>Add Transaction</h2>
+                    <h2 style={{ fontSize: '1rem', fontWeight: '850', color: 'var(--text-primary)' }}>
+                        {isEditing ? 'Edit Transaction' : 'Add Transaction'}
+                    </h2>
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -278,20 +306,40 @@ const TransactionForm = ({ onAdd }) => {
                     </div>
                 )}
 
-                <button type="submit" className="btn btn-primary" style={{
-                    padding: '0.75rem',
-                    fontSize: '0.9rem',
-                    width: '100%',
-                    borderRadius: '10px',
-                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    marginTop: '1rem'
-                }}>
-                    <Plus size={16} strokeWidth={3} /> Add Transaction
-                </button>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+                    {isEditing && (
+                        <button type="button" onClick={handleCancel} className="btn" style={{
+                            padding: '0.75rem',
+                            fontSize: '0.9rem',
+                            flex: 1,
+                            borderRadius: '10px',
+                            background: '#f1f5f9',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-subtle)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            cursor: 'pointer'
+                        }}>
+                            <X size={16} /> Cancel
+                        </button>
+                    )}
+                    <button type="submit" className="btn btn-primary" style={{
+                        padding: '0.75rem',
+                        fontSize: '0.9rem',
+                        flex: isEditing ? 1 : 'auto',
+                        width: isEditing ? 'auto' : '100%',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                    }}>
+                        {isEditing ? <><Save size={16} /> Update</> : <><Plus size={16} strokeWidth={3} /> Add Transaction</>}
+                    </button>
+                </div>
                 <input type="file" ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} />
             </form>
         </section>
