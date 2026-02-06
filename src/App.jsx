@@ -18,6 +18,7 @@ import PortfolioManager from './components/PortfolioManager';
 import InstallPrompt from './components/InstallPrompt';
 import UpdateNotification from './components/UpdateNotification';
 import SharedReceiptProcessor from './components/SharedReceiptProcessor';
+import AppLock from './components/AppLock';
 import useShareTarget from './hooks/useShareTarget';
 import { ArrowUp, ArrowDown, Wallet, Layers, ChevronRight } from 'lucide-react';
 import './App.css';
@@ -42,9 +43,9 @@ const LedgerApp = () => {
     startDate: '',
     endDate: ''
   });
-  const [activeTab, setActiveTab] = useState('overview');
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [sharedReceiptData, setSharedReceiptData] = useState(null);
+  const [isLocked, setIsLocked] = useState(localStorage.getItem('app_lock_enabled') === 'true');
 
   // Handle shared files from Share Target
   const { sharedFile, clearSharedFile } = useShareTarget();
@@ -111,9 +112,17 @@ const LedgerApp = () => {
 
   return (
     <>
+      {isLocked && (
+        <AppLock onUnlock={() => setIsLocked(false)} />
+      )}
       <div className="background-glob"></div>
       <div className="container dashboard-layout" style={{ maxWidth: '1400px', paddingBottom: '90px' }}>
-        <Header isPrivacyMode={isPrivacyMode} togglePrivacyMode={togglePrivacyMode} />
+        <Header
+          isPrivacyMode={isPrivacyMode}
+          togglePrivacyMode={togglePrivacyMode}
+          isLocked={isLocked}
+          setIsLocked={setIsLocked}
+        />
 
         {activeTab === 'overview' && (
           <div className="overview-grid">
