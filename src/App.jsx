@@ -21,6 +21,7 @@ import SharedReceiptProcessor from './components/SharedReceiptProcessor';
 import AppLock from './components/AppLock';
 import OfflineStatus from './components/OfflineStatus';
 import useShareTarget from './hooks/useShareTarget';
+import { requestNotificationPermission, sendLocalNotification } from './utils/notifications';
 import { ArrowUp, ArrowDown, Wallet, Layers, ChevronRight } from 'lucide-react';
 import './App.css';
 
@@ -52,6 +53,16 @@ const LedgerApp = () => {
   // Handle shared files from Share Target
   const { sharedFile, clearSharedFile } = useShareTarget();
 
+  useEffect(() => {
+    // Request notification permission on load
+    requestNotificationPermission();
+  }, []);
+
+  const handleAddTransaction = async (data) => {
+    await addTransaction(data);
+    sendLocalNotification("Transaction Added", `Successfully saved: ${data.description}`);
+  };
+
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
 
   const handleStartEdit = (transaction) => {
@@ -79,6 +90,7 @@ const LedgerApp = () => {
     setActiveTab('overview');
     // Scroll to top to see the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    sendLocalNotification("Receipt Scanned", "AI extracted the details. Please verify and save.");
   };
 
   if (!currentUser) {
@@ -131,7 +143,7 @@ const LedgerApp = () => {
             {/* Sidebar: Entry Form on Left */}
             <aside className="sidebar-section">
               <TransactionForm
-                onAdd={addTransaction}
+                onAdd={handleAddTransaction}
                 editingTransaction={editingTransaction}
                 onSaveEdit={handleSaveEdit}
                 onCancelEdit={handleCancelEdit}
