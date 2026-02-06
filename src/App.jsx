@@ -19,6 +19,7 @@ import InstallPrompt from './components/InstallPrompt';
 import UpdateNotification from './components/UpdateNotification';
 import SharedReceiptProcessor from './components/SharedReceiptProcessor';
 import AppLock from './components/AppLock';
+import OfflineStatus from './components/OfflineStatus';
 import useShareTarget from './hooks/useShareTarget';
 import { ArrowUp, ArrowDown, Wallet, Layers, ChevronRight } from 'lucide-react';
 import './App.css';
@@ -218,6 +219,7 @@ const LedgerApp = () => {
         {/* PWA Components */}
         <InstallPrompt />
         <UpdateNotification />
+        <OfflineStatus />
         <SharedReceiptProcessor
           sharedFile={sharedFile}
           onExtracted={handleSharedReceipt}
