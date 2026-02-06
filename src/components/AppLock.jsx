@@ -1,12 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Unlock, Delete, AlertCircle } from 'lucide-react';
+import { Lock, Unlock, Delete, AlertCircle, Fingerprint } from 'lucide-react';
 
 const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
     const [pin, setPin] = useState('');
     const [error, setError] = useState(false);
     const [savedPin, setSavedPin] = useState(localStorage.getItem('app_lock_pin'));
-    const [mode, setMode] = useState(isSettingPin ? 'set' : 'unlock'); // 'unlock', 'set', 'confirm'
+    const [mode, setMode] = useState(isSettingPin ? 'set' : 'unlock');
     const [tempPin, setTempPin] = useState('');
+    const [biometricsAvailable, setBiometricsAvailable] = useState(false);
+
+    // Check for biometric support on load
+    useEffect(() => {
+        if (window.PublicKeyCredential && !isSettingPin) {
+            setBiometricsAvailable(true);
+            // Auto-trigger on mount if not in "set" mode
+            if (localStorage.getItem('biometrics_enabled') === 'true') {
+                handleBiometricAuth();
+            }
+        }
+    }, []);
+
+    const handleBiometricAuth = async () => {
+        try {
+            // Check if user has already enabled biometrics for this app
+            const isEnabled = localStorage.getItem('biometrics_enabled') === 'true';
+
+            if (isEnabled) {
+                // Simplified "get" request for biometric verification
+                // Note: In a real PWA, this would use a challenge from a server, 
+                // but for a local lock, we're checking device possession.
+                await navigator.credentials.get({
+                    publicKey: {
+                        challenge: new Uint8Array([1, 2, 3, 4]), // Dummy challenge
+                        allowCredentials: [],
+                        userVerification: "required"
+                    }
+                });
+
+                onUnlock();
+            } else {
+                // First time setup - register biometrics
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: new Uint8Array([1, 2, 3, 4]),
+                        rp: { name: "Transaction Ledger" },
+                        user: {
+                            id: new Uint8Array([1, 2, 3, 4]),
+                            name: "User",
+                            displayName: "User"
+                        },
+                        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                        authenticatorSelection: { userVerification: "required" }
+                    }
+                });
+
+                if (credential) {
+                    localStorage.setItem('biometrics_enabled', 'true');
+                    alert("Biometrics enabled successfully!");
+                }
+            }
+        } catch (err) {
+            console.log("Biometric error:", err);
+            // If they cancel, they just use the PIN
+        }
+    };
 
     const handleNumberClick = (num) => {
         if (pin.length < 4) {
@@ -145,7 +202,26 @@ const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
                         {num}
                     </button>
                 ))}
-                <div />
+                {biometricsAvailable ? (
+                    <button
+                        onClick={handleBiometricAuth}
+                        style={{
+                            height: '70px',
+                            width: '70px',
+                            background: 'rgba(99, 102, 241, 0.1)',
+                            border: '1px solid rgba(99, 102, 241, 0.2)',
+                            borderRadius: '50%',
+                            color: 'var(--accent-primary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto'
+                        }}
+                    >
+                        <Fingerprint size={28} />
+                    </button>
+                ) : <div />}
                 <button
                     onClick={() => handleNumberClick('0')}
                     style={{
