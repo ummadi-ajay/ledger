@@ -82,7 +82,7 @@ const LedgerApp = () => {
         {activeTab === 'overview' && (
           <div className="overview-grid">
             {/* Main Content: Stats & Analysis */}
-            <main className="main-content-section" style={{ order: 1 }}>
+            <main className="main-content-section">
               {/* Top Stats Cards */}
               <div className="summary-grid">
                 <div className="summary-card-premium animate-fade-in" style={{ borderBottom: '4px solid var(--success)' }}>
@@ -137,7 +137,7 @@ const LedgerApp = () => {
             </main>
 
             {/* Sidebar: Entry Form on Right */}
-            <aside className="sidebar-section" style={{ order: 2 }}>
+            <aside className="sidebar-section">
               <TransactionForm onAdd={addTransaction} />
             </aside>
           </div>
