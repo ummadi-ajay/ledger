@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, Delete, AlertCircle, Fingerprint } from 'lucide-react';
 
+// Helpers for WebAuthn ID storage
+const bufferToBase64 = (buffer) => {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+};
+
+const base64ToUint8Array = (base64) => {
+    return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+};
+
+
 const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
     const [pin, setPin] = useState('');
     const [error, setError] = useState(false);
@@ -22,27 +32,46 @@ const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
 
     const handleBiometricAuth = async () => {
         try {
-            // Check if user has already enabled biometrics for this app
             const isEnabled = localStorage.getItem('biometrics_enabled') === 'true';
+            const savedCredId = localStorage.getItem('biometrics_id');
 
             if (isEnabled) {
                 // Request biometric verification
-                await navigator.credentials.get({
+                const options = {
                     publicKey: {
                         challenge: crypto.getRandomValues(new Uint8Array(32)),
                         userVerification: "required"
                     }
-                });
+                };
 
-                onUnlock();
+                // If we have a saved ID, use it to skip the picker
+                if (savedCredId) {
+                    options.publicKey.allowCredentials = [{
+                        id: base64ToUint8Array(savedCredId),
+                        type: 'public-key'
+                    }];
+                }
+
+                const assertion = await navigator.credentials.get(options);
+
+                if (assertion) {
+                    // Update/Save the ID for future direct access if it was missing
+                    if (!savedCredId) {
+                        localStorage.setItem('biometrics_id', bufferToBase64(assertion.rawId));
+                    }
+                    onUnlock();
+                }
             } else {
                 // First time setup - register biometrics
+                const challenge = crypto.getRandomValues(new Uint8Array(32));
+                const userId = crypto.getRandomValues(new Uint8Array(16));
+
                 const credential = await navigator.credentials.create({
                     publicKey: {
-                        challenge: crypto.getRandomValues(new Uint8Array(32)),
+                        challenge,
                         rp: { name: "Transaction Ledger" },
                         user: {
-                            id: crypto.getRandomValues(new Uint8Array(16)),
+                            id: userId,
                             name: "ledger-user",
                             displayName: "Ledger User"
                         },
@@ -55,17 +84,24 @@ const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
                 });
 
                 if (credential) {
+                    // Store the credential ID to use it for direct authentication later
+                    localStorage.setItem('biometrics_id', bufferToBase64(credential.rawId));
                     localStorage.setItem('biometrics_enabled', 'true');
-                    onUnlock(); // UNLOCK IMMEDIATELY AFTER SETUP
+                    onUnlock();
                 }
             }
         } catch (err) {
             console.log("Biometric error:", err);
+            // If the saved ID is no longer valid, clear it so it can be re-captured
+            if (err.name === 'InvalidStateError' || err.name === 'NotFoundError') {
+                localStorage.removeItem('biometrics_id');
+            }
             if (err.name !== 'NotAllowedError') {
                 alert("Biometric failed: " + err.message);
             }
         }
     };
+
 
     const handleNumberClick = (num) => {
         if (pin.length < 4) {
