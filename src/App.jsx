@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import TransactionForm from './components/TransactionForm';
 import Tools from './components/Tools';
@@ -17,6 +17,8 @@ import DebtManager from './components/DebtManager';
 import PortfolioManager from './components/PortfolioManager';
 import InstallPrompt from './components/InstallPrompt';
 import UpdateNotification from './components/UpdateNotification';
+import SharedReceiptProcessor from './components/SharedReceiptProcessor';
+import useShareTarget from './hooks/useShareTarget';
 import { ArrowUp, ArrowDown, Wallet, Layers, ChevronRight } from 'lucide-react';
 import './App.css';
 
@@ -42,6 +44,10 @@ const LedgerApp = () => {
   });
   const [activeTab, setActiveTab] = useState('overview');
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [sharedReceiptData, setSharedReceiptData] = useState(null);
+
+  // Handle shared files from Share Target
+  const { sharedFile, clearSharedFile } = useShareTarget();
 
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
 
@@ -60,6 +66,16 @@ const LedgerApp = () => {
 
   const handleCancelEdit = () => {
     setEditingTransaction(null);
+  };
+
+  // Handle extracted data from shared receipt
+  const handleSharedReceipt = (extractedData) => {
+    setSharedReceiptData(extractedData);
+    clearSharedFile();
+    // Switch to overview tab to show the form
+    setActiveTab('overview');
+    // Scroll to top to see the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (!currentUser) {
@@ -108,6 +124,8 @@ const LedgerApp = () => {
                 editingTransaction={editingTransaction}
                 onSaveEdit={handleSaveEdit}
                 onCancelEdit={handleCancelEdit}
+                sharedReceiptData={sharedReceiptData}
+                onClearSharedData={() => setSharedReceiptData(null)}
               />
             </aside>
 
@@ -186,9 +204,14 @@ const LedgerApp = () => {
 
         <Footer activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* PWA Components - temporarily disabled for debugging */}
-        {/* <InstallPrompt /> */}
-        {/* <UpdateNotification /> */}
+        {/* PWA Components */}
+        <InstallPrompt />
+        <UpdateNotification />
+        <SharedReceiptProcessor
+          sharedFile={sharedFile}
+          onExtracted={handleSharedReceipt}
+          onDismiss={clearSharedFile}
+        />
       </div>
     </>
   );

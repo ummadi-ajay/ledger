@@ -83,7 +83,20 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'maskable'
           }
-        ]
+        ],
+        share_target: {
+          action: '/ledger/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            files: [
+              {
+                name: 'receipt',
+                accept: ['image/*']
+              }
+            ]
+          }
+        }
       }
     })
   ],

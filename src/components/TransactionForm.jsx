@@ -4,7 +4,7 @@ import { CATEGORIES } from '../utils';
 import { createWorker } from 'tesseract.js';
 import { useWallets } from '../hooks/useWallets';
 
-const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }) => {
+const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit, sharedReceiptData, onClearSharedData }) => {
     const { wallets } = useWallets();
     const isEditing = !!editingTransaction;
 
@@ -32,10 +32,20 @@ const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }
                 amountOut: editingTransaction.amountOut || '',
                 location: editingTransaction.location || null
             });
+        } else if (sharedReceiptData) {
+            setFormData(prev => ({
+                ...prev,
+                description: sharedReceiptData.description || prev.description,
+                category: sharedReceiptData.category || prev.category,
+                amountIn: sharedReceiptData.amountIn !== undefined ? sharedReceiptData.amountIn : prev.amountIn,
+                amountOut: sharedReceiptData.amountOut !== undefined ? sharedReceiptData.amountOut : prev.amountOut
+            }));
+            // Clear shared data after applying
+            if (onClearSharedData) onClearSharedData();
         } else {
             setFormData(getInitialFormData());
         }
-    }, [editingTransaction]);
+    }, [editingTransaction, sharedReceiptData, onClearSharedData]);
 
     const [isListening, setIsListening] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
