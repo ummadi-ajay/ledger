@@ -46,6 +46,38 @@ const TransactionTable = ({ transactions, onEdit, onDelete, isPrivacyMode }) => 
         return { ...t, net, balance: runningBalance };
     });
 
+    // Inline editing functions
+    const startInlineEdit = (t) => {
+        setEditingId(t.id);
+        setEditForm({
+            date: t.date,
+            description: t.description,
+            category: t.category,
+            amountIn: t.amountIn || '',
+            amountOut: t.amountOut || ''
+        });
+    };
+
+    const handleEditFormChange = (field, value) => {
+        setEditForm(prev => ({ ...prev, [field]: value }));
+    };
+
+    const saveInlineEdit = async (t) => {
+        await onEdit({
+            ...t,
+            ...editForm,
+            amountIn: parseFloat(editForm.amountIn) || 0,
+            amountOut: parseFloat(editForm.amountOut) || 0
+        });
+        setEditingId(null);
+        setEditForm({});
+    };
+
+    const cancelInlineEdit = () => {
+        setEditingId(null);
+        setEditForm({});
+    };
+
     const exportPDF = (type) => {
         const doc = new jsPDF(type === 'ledger' ? 'landscape' : 'portrait');
         doc.setFontSize(18);
@@ -328,60 +360,122 @@ const TransactionTable = ({ transactions, onEdit, onDelete, isPrivacyMode }) => 
                             {transactions.length === 0 ? (
                                 <tr><td colSpan="8" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>No transaction history found</td></tr>
                             ) : (
-                                transactionsWithBalance.map(t => (
-                                    <tr key={t.id} style={{ transition: 'background 0.2s' }}>
-                                        <td style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', fontWeight: '500', color: 'var(--text-muted)' }}>
-                                            {formatDate(t.date)}
-                                        </td>
-                                        <td>
-                                            <span style={{ fontWeight: '500', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>{t.description}</span>
-                                        </td>
-                                        <td>
-                                            <div className="category-badge">
-                                                {getCategoryIcon(t.category)}
-                                                {t.category}
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            {t.amountIn > 0 ? (
-                                                <span className={`income ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700' }}>
-                                                    ₹{t.amountIn.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                transactionsWithBalance.map(t => {
+                                    const isRowEditing = editingId === t.id;
+
+                                    return (
+                                        <tr key={t.id} style={{ transition: 'background 0.2s', background: isRowEditing ? '#f0f9ff' : 'transparent' }}>
+                                            <td style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', fontWeight: '500', color: 'var(--text-muted)' }}>
+                                                {isRowEditing ? (
+                                                    <input
+                                                        type="date"
+                                                        value={editForm.date}
+                                                        onChange={(e) => handleEditFormChange('date', e.target.value)}
+                                                        style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--border-subtle)', fontSize: '0.85rem', width: '100%' }}
+                                                    />
+                                                ) : formatDate(t.date)}
+                                            </td>
+                                            <td>
+                                                {isRowEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        value={editForm.description}
+                                                        onChange={(e) => handleEditFormChange('description', e.target.value)}
+                                                        style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--border-subtle)', fontSize: '0.9rem', width: '100%' }}
+                                                    />
+                                                ) : (
+                                                    <span style={{ fontWeight: '500', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>{t.description}</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {isRowEditing ? (
+                                                    <select
+                                                        value={editForm.category}
+                                                        onChange={(e) => handleEditFormChange('category', e.target.value)}
+                                                        style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--border-subtle)', fontSize: '0.85rem', width: '100%' }}
+                                                    >
+                                                        <option value="">Select Category</option>
+                                                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                                    </select>
+                                                ) : (
+                                                    <div className="category-badge">
+                                                        {getCategoryIcon(t.category)}
+                                                        {t.category}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                {isRowEditing ? (
+                                                    <input
+                                                        type="number"
+                                                        value={editForm.amountIn}
+                                                        onChange={(e) => handleEditFormChange('amountIn', e.target.value)}
+                                                        placeholder="0.00"
+                                                        style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--border-subtle)', fontSize: '0.85rem', width: '80px', textAlign: 'right' }}
+                                                    />
+                                                ) : (
+                                                    t.amountIn > 0 ? (
+                                                        <span className={`income ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700' }}>
+                                                            ₹{t.amountIn.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
+                                                    )
+                                                )}
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                {isRowEditing ? (
+                                                    <input
+                                                        type="number"
+                                                        value={editForm.amountOut}
+                                                        onChange={(e) => handleEditFormChange('amountOut', e.target.value)}
+                                                        placeholder="0.00"
+                                                        style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--border-subtle)', fontSize: '0.85rem', width: '80px', textAlign: 'right' }}
+                                                    />
+                                                ) : (
+                                                    t.amountOut > 0 ? (
+                                                        <span className={`expense ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700', color: 'var(--danger)' }}>
+                                                            ₹{t.amountOut.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
+                                                    )
+                                                )}
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <span className={`${t.net >= 0 ? 'income' : 'expense'} ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '500' }}>
+                                                    {t.net >= 0 ? '+' : ''}{formatCurrency(t.net)}
                                                 </span>
-                                            ) : (
-                                                <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
-                                            )}
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            {t.amountOut > 0 ? (
-                                                <span className={`expense ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700', color: 'var(--danger)' }}>
-                                                    ₹{t.amountOut.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                                </span>
-                                            ) : (
-                                                <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
-                                            )}
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <span className={`${t.net >= 0 ? 'income' : 'expense'} ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '500' }}>
-                                                {t.net >= 0 ? '+' : ''}{formatCurrency(t.net)}
-                                            </span>
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <div className={`${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '800', color: 'var(--text-primary)' }}>
-                                                {formatCurrency(t.balance)}
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                                <button onClick={() => onEdit(t)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#f1f5f9' }}>
-                                                    <Pen size={14} color="#6366f1" />
-                                                </button>
-                                                <button onClick={() => onDelete(t.id)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#fee2e2' }}>
-                                                    <Trash2 size={14} color="#f43f5e" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div className={`${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '800', color: 'var(--text-primary)' }}>
+                                                    {formatCurrency(t.balance)}
+                                                </div>
+                                            </td>
+                                            <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                                {isRowEditing ? (
+                                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                                        <button onClick={() => saveInlineEdit(t)} className="icon-btn" style={{ padding: '0.4rem 0.6rem', minWidth: 'auto', borderRadius: '6px', background: 'var(--success)', color: 'white', fontSize: '0.75rem', fontWeight: '600' }}>
+                                                            Save
+                                                        </button>
+                                                        <button onClick={cancelInlineEdit} className="icon-btn" style={{ padding: '0.4rem 0.6rem', minWidth: 'auto', borderRadius: '6px', background: '#f1f5f9', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '600' }}>
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                        <button onClick={() => startInlineEdit(t)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#f1f5f9' }}>
+                                                            <Pen size={14} color="#6366f1" />
+                                                        </button>
+                                                        <button onClick={() => onDelete(t.id)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#fee2e2' }}>
+                                                            <Trash2 size={14} color="#f43f5e" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

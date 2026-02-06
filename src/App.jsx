@@ -157,7 +157,7 @@ const LedgerApp = () => {
                 <SearchFilters filters={filters} setFilters={setFilters} />
                 <TransactionTable
                   transactions={filteredTransactions}
-                  onEdit={handleStartEdit}
+                  onEdit={editTransaction}
                   onDelete={deleteTransaction}
                   isPrivacyMode={isPrivacyMode}
                 />
