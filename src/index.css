@@ -397,16 +397,17 @@ tr:hover td {
 
 /* Dashboard Layout */
 .overview-grid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 2.5rem;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
     margin-top: 1rem;
 }
 
-@media (max-width: 1100px) {
+@media (min-width: 1100px) {
     .overview-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 2.5rem;
     }
 }
 
@@ -456,13 +457,7 @@ tbody td {
     vertical-align: middle;
 }
 
-/* Mobile Adjustments */
 @media (max-width: 1100px) {
-    .overview-grid {
-        display: flex;
-        flex-direction: column;
-    }
-
     .sidebar-section {
         position: relative;
         top: 0;
@@ -472,23 +467,36 @@ tbody td {
 
 @media (max-width: 600px) {
     .container {
-        padding: 1rem;
+        padding: 1rem 0.75rem;
     }
 
     .summary-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card-premium {
+        padding: 1.25rem;
+    }
+
+    .summary-value-mini {
+        font-size: 1.5rem;
     }
 
     .table-container {
         border-radius: 12px;
-        margin-left: 0;
-        margin-right: 0;
+        margin: 0;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-container table {
+        min-width: 600px;
     }
 
     h1 {
-        font-size: 1.25rem;
+        font-size: 1.5rem;
     }
 
     .header-icon {
