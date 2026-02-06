@@ -43,6 +43,7 @@ const LedgerApp = () => {
     startDate: '',
     endDate: ''
   });
+  const [activeTab, setActiveTab] = useState('overview');
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [sharedReceiptData, setSharedReceiptData] = useState(null);
   const [isLocked, setIsLocked] = useState(localStorage.getItem('app_lock_enabled') === 'true');
