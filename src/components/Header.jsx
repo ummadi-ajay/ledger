@@ -1,3 +1,4 @@
+import React from 'react';
 import { Wallet, Eye, EyeOff, LogOut, Shield, ShieldCheck, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AppLock from './AppLock';
