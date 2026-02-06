@@ -4,7 +4,7 @@ import {
     Utensils, Home, Receipt, Armchair, Briefcase,
     DollarSign, Clock, TrendingUp, Plane, Settings,
     User, RefreshCw, LineChart, Tag, FileCheck, FileText, MapPin,
-    ChevronRight, ArrowDown, ArrowUp
+    ChevronRight, ChevronDown, ArrowDown, ArrowUp
 } from 'lucide-react';
 import { formatCurrency, formatDate, CATEGORIES } from '../utils';
 import { jsPDF } from 'jspdf';
@@ -33,6 +33,7 @@ const getCategoryIcon = (category) => {
 const TransactionTable = ({ transactions, onEdit, onDelete, isPrivacyMode }) => {
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
+    const [expandedId, setExpandedId] = useState(null);
 
     // Sort transactions by date (oldest first for running balance)
     const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -109,16 +110,179 @@ const TransactionTable = ({ transactions, onEdit, onDelete, isPrivacyMode }) => 
         doc.save(`${type}-report.pdf`);
     };
 
+    const toggleExpand = (id) => {
+        setExpandedId(expandedId === id ? null : id);
+    };
+
+    // Mobile Card Component
+    const TransactionCard = ({ t }) => {
+        const isExpanded = expandedId === t.id;
+        const isIncome = t.amountIn > 0;
+
+        return (
+            <div
+                className="transaction-card"
+                style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    marginBottom: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    overflow: 'hidden',
+                    border: `2px solid ${isIncome ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`,
+                    transition: 'all 0.3s ease'
+                }}
+            >
+                {/* Main Row - Always Visible */}
+                <div
+                    onClick={() => toggleExpand(t.id)}
+                    style={{
+                        padding: '16px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <div style={{ flex: 1 }}>
+                        <div style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-muted)',
+                            marginBottom: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                        }}>
+                            {formatDate(t.date)}
+                        </div>
+                        <div style={{
+                            fontWeight: '600',
+                            fontSize: '0.95rem',
+                            color: 'var(--text-primary)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '180px'
+                        }}>
+                            {t.description}
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ textAlign: 'right' }}>
+                            <div className={isPrivacyMode ? 'privacy-blur' : ''} style={{
+                                fontWeight: '800',
+                                fontSize: '1.1rem',
+                                color: isIncome ? 'var(--success)' : 'var(--danger)'
+                            }}>
+                                {isIncome ? '+' : '-'}₹{(isIncome ? t.amountIn : t.amountOut).toLocaleString('en-IN')}
+                            </div>
+                        </div>
+                        <div style={{
+                            transition: 'transform 0.3s ease',
+                            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                            color: 'var(--text-muted)'
+                        }}>
+                            <ChevronRight size={20} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                    <div style={{
+                        padding: '0 16px 16px 16px',
+                        borderTop: '1px solid var(--border-subtle)',
+                        background: '#fafafa',
+                        animation: 'fadeIn 0.2s ease'
+                    }}>
+                        <div style={{ paddingTop: '12px' }}>
+                            {/* Category */}
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '12px'
+                            }}>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Category</span>
+                                <div className="category-badge" style={{ fontSize: '0.75rem' }}>
+                                    {getCategoryIcon(t.category)}
+                                    {t.category || 'Uncategorized'}
+                                </div>
+                            </div>
+
+                            {/* Balance */}
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '12px'
+                            }}>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Running Balance</span>
+                                <span className={isPrivacyMode ? 'privacy-blur' : ''} style={{
+                                    fontWeight: '700',
+                                    color: t.balance >= 0 ? 'var(--success)' : 'var(--danger)'
+                                }}>
+                                    {formatCurrency(t.balance)}
+                                </span>
+                            </div>
+
+                            {/* Actions */}
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onEdit(t); }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px',
+                                        borderRadius: '10px',
+                                        background: 'var(--accent-glow)',
+                                        border: '1px solid var(--accent-primary)',
+                                        color: 'var(--accent-primary)',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <Pen size={14} /> Edit
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px',
+                                        borderRadius: '10px',
+                                        background: '#fee2e2',
+                                        border: '1px solid #f43f5e',
+                                        color: '#f43f5e',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <Trash2 size={14} /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <section className="animate-fade-in" style={{ marginTop: '3rem' }}>
-            <div className="section-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="section-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '850', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ background: 'var(--accent-glow)', padding: '10px', borderRadius: '12px', color: 'var(--accent-primary)' }}>
                         <Table size={24} />
                     </div>
                     Transaction History
                 </h2>
-                <div className="btn-group">
+                <div className="btn-group" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button onClick={() => exportPDF('ledger')} className="btn btn-sm btn-outline" style={{ border: 'none' }}>
                         <FileText size={14} style={{ marginRight: '6px' }} /> Ledger
                     </button>
@@ -131,81 +295,97 @@ const TransactionTable = ({ transactions, onEdit, onDelete, isPrivacyMode }) => 
                 </div>
             </div>
 
-            <div className="table-container">
-                <table style={{ minWidth: '800px' }}>
-                    <thead>
-                        <tr>
-                            <th style={{ width: '120px' }}>DATE</th>
-                            <th>DESCRIPTION</th>
-                            <th style={{ width: '220px' }}>CATEGORY</th>
-                            <th style={{ textAlign: 'right', width: '120px' }}>IN</th>
-                            <th style={{ textAlign: 'right', width: '120px' }}>OUT</th>
-                            <th style={{ textAlign: 'right', width: '120px' }}>NET</th>
-                            <th style={{ textAlign: 'right', width: '120px' }}>BALANCE</th>
-                            <th style={{ width: '100px' }}></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transactions.length === 0 ? (
-                            <tr><td colSpan="8" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>No transaction history found</td></tr>
-                        ) : (
-                            transactionsWithBalance.map(t => (
-                                <tr key={t.id} style={{ transition: 'background 0.2s' }}>
-                                    <td style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', fontWeight: '500', color: 'var(--text-muted)' }}>
-                                        {formatDate(t.date)}
-                                    </td>
-                                    <td>
-                                        <span style={{ fontWeight: '500', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>{t.description}</span>
-                                    </td>
-                                    <td>
-                                        <div className="category-badge">
-                                            {getCategoryIcon(t.category)}
-                                            {t.category}
-                                        </div>
-                                    </td>
-                                    <td style={{ textAlign: 'right' }}>
-                                        {t.amountIn > 0 ? (
-                                            <span className={`income ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700' }}>
-                                                ₹{t.amountIn.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            {/* Mobile Card View */}
+            <div className="mobile-transaction-list">
+                {transactions.length === 0 ? (
+                    <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', background: 'white', borderRadius: '16px' }}>
+                        No transactions found
+                    </div>
+                ) : (
+                    transactionsWithBalance.slice().reverse().map(t => (
+                        <TransactionCard key={t.id} t={t} />
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="desktop-transaction-table">
+                <div className="table-container">
+                    <table style={{ minWidth: '800px' }}>
+                        <thead>
+                            <tr>
+                                <th style={{ width: '120px' }}>DATE</th>
+                                <th>DESCRIPTION</th>
+                                <th style={{ width: '220px' }}>CATEGORY</th>
+                                <th style={{ textAlign: 'right', width: '120px' }}>IN</th>
+                                <th style={{ textAlign: 'right', width: '120px' }}>OUT</th>
+                                <th style={{ textAlign: 'right', width: '120px' }}>NET</th>
+                                <th style={{ textAlign: 'right', width: '120px' }}>BALANCE</th>
+                                <th style={{ width: '100px' }}></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {transactions.length === 0 ? (
+                                <tr><td colSpan="8" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>No transaction history found</td></tr>
+                            ) : (
+                                transactionsWithBalance.map(t => (
+                                    <tr key={t.id} style={{ transition: 'background 0.2s' }}>
+                                        <td style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', fontWeight: '500', color: 'var(--text-muted)' }}>
+                                            {formatDate(t.date)}
+                                        </td>
+                                        <td>
+                                            <span style={{ fontWeight: '500', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>{t.description}</span>
+                                        </td>
+                                        <td>
+                                            <div className="category-badge">
+                                                {getCategoryIcon(t.category)}
+                                                {t.category}
+                                            </div>
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            {t.amountIn > 0 ? (
+                                                <span className={`income ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700' }}>
+                                                    ₹{t.amountIn.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                </span>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
+                                            )}
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            {t.amountOut > 0 ? (
+                                                <span className={`expense ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700', color: 'var(--danger)' }}>
+                                                    ₹{t.amountOut.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                </span>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
+                                            )}
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <span className={`${t.net >= 0 ? 'income' : 'expense'} ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '500' }}>
+                                                {t.net >= 0 ? '+' : ''}{formatCurrency(t.net)}
                                             </span>
-                                        ) : (
-                                            <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
-                                        )}
-                                    </td>
-                                    <td style={{ textAlign: 'right' }}>
-                                        {t.amountOut > 0 ? (
-                                            <span className={`expense ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '700', color: 'var(--danger)' }}>
-                                                ₹{t.amountOut.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                            </span>
-                                        ) : (
-                                            <span style={{ color: 'var(--text-muted)', opacity: 0.5 }}>-</span>
-                                        )}
-                                    </td>
-                                    <td style={{ textAlign: 'right' }}>
-                                        <span className={`${t.net >= 0 ? 'income' : 'expense'} ${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '500' }}>
-                                            {t.net >= 0 ? '+' : ''}{formatCurrency(t.net)}
-                                        </span>
-                                    </td>
-                                    <td style={{ textAlign: 'right' }}>
-                                        <div className={`${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '800', color: 'var(--text-primary)' }}>
-                                            {formatCurrency(t.balance)}
-                                        </div>
-                                    </td>
-                                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                            <button onClick={() => onEdit(t)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#f1f5f9' }}>
-                                                <Pen size={14} color="#6366f1" />
-                                            </button>
-                                            <button onClick={() => onDelete(t.id)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#fee2e2' }}>
-                                                <Trash2 size={14} color="#f43f5e" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <div className={`${isPrivacyMode ? 'privacy-blur' : ''}`} style={{ fontWeight: '800', color: 'var(--text-primary)' }}>
+                                                {formatCurrency(t.balance)}
+                                            </div>
+                                        </td>
+                                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                <button onClick={() => onEdit(t)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#f1f5f9' }}>
+                                                    <Pen size={14} color="#6366f1" />
+                                                </button>
+                                                <button onClick={() => onDelete(t.id)} className="icon-btn" style={{ padding: '0.5rem', minWidth: 'auto', borderRadius: '8px', background: '#fee2e2' }}>
+                                                    <Trash2 size={14} color="#f43f5e" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     );
