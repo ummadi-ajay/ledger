@@ -22,23 +22,16 @@ export const useShareTarget = () => {
             }
 
             // Fallback: Check for files in the service worker cache
-            // This handles the share_target POST request
             try {
-                const cache = await caches.open('share-target-cache');
-                const requests = await cache.keys();
+                const cache = await caches.open('shared-files');
+                const response = await cache.match('shared-image');
 
-                for (const request of requests) {
-                    const response = await cache.match(request);
-                    if (response) {
-                        const formData = await response.formData();
-                        const file = formData.get('receipt');
-                        if (file) {
-                            setSharedFile(file);
-                            // Clean up the cache
-                            await cache.delete(request);
-                            break;
-                        }
-                    }
+                if (response) {
+                    const blob = await response.blob();
+                    const file = new File([blob], 'shared-receipt.jpg', { type: blob.type });
+                    setSharedFile(file);
+                    // Clean up the cache
+                    await cache.delete('shared-image');
                 }
             } catch (error) {
                 console.log('No shared files in cache:', error);
