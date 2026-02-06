@@ -178,6 +178,7 @@ const LedgerApp = () => {
                 <TransactionTable
                   transactions={filteredTransactions}
                   onEdit={editTransaction}
+                  onEditStart={handleStartEdit}
                   onDelete={deleteTransaction}
                   isPrivacyMode={isPrivacyMode}
                 />

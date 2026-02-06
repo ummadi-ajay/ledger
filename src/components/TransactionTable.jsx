@@ -30,7 +30,7 @@ const getCategoryIcon = (category) => {
     }
 };
 
-const TransactionTable = ({ transactions, onEdit, onDelete, isPrivacyMode }) => {
+const TransactionTable = ({ transactions, onEdit, onEditStart, onDelete, isPrivacyMode }) => {
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [expandedId, setExpandedId] = useState(null);
@@ -260,7 +260,7 @@ const TransactionTable = ({ transactions, onEdit, onDelete, isPrivacyMode }) => 
                             {/* Actions */}
                             <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); onEdit(t); }}
+                                    onClick={(e) => { e.stopPropagation(); onEditStart(t); }}
                                     style={{
                                         flex: 1,
                                         padding: '10px',
