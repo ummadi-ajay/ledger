@@ -34,3 +34,8 @@
     "vite": "^7.2.4"
   }
 }
+"homepage": "https://makerworkslab.in/ledger",
+"scripts": {
+  "predeploy": "npm run build",
+  "deploy": "gh-pages -d dist"
+}
