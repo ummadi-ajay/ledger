@@ -7,10 +7,7 @@ export const useShareTarget = () => {
 
     useEffect(() => {
         const handleSharedFile = async () => {
-            // Check if we're on the share-target route
-            if (!window.location.pathname.includes('share-target')) return;
-
-            // Use the File Handling API (modern browsers)
+            // Check for modern File Handling API first
             if ('launchQueue' in window) {
                 window.launchQueue.setConsumer(async (launchParams) => {
                     if (launchParams.files && launchParams.files.length > 0) {

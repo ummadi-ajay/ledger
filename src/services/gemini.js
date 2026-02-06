@@ -37,9 +37,11 @@ export const analyzeReceipt = async (file) => {
         const response = await result.response;
         const text = response.text();
 
-        // Clean the response (sometimes Gemini adds ```json ... ```)
-        const cleanText = text.replace(/```json|```/g, "").trim();
-        const data = JSON.parse(cleanText);
+        // Use regex to find the JSON block in case Gemini adds markdown or conversational text
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("No JSON found in AI response");
+
+        const data = JSON.parse(jsonMatch[0]);
 
         return {
             amount: data.amount,
