@@ -186,9 +186,9 @@ const LedgerApp = () => {
 
         <Footer activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* PWA Components */}
-        <InstallPrompt />
-        <UpdateNotification />
+        {/* PWA Components - temporarily disabled for debugging */}
+        {/* <InstallPrompt /> */}
+        {/* <UpdateNotification /> */}
       </div>
     </>
   );

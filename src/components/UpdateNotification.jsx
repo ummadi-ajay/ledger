@@ -1,22 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, X, Sparkles } from 'lucide-react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 
 const UpdateNotification = () => {
-    const {
-        needRefresh: [needRefresh, setNeedRefresh],
-        updateServiceWorker
-    } = useRegisterSW({
-        onRegistered(r) {
-            console.log('SW Registered:', r);
-        },
-        onRegisterError(error) {
-            console.log('SW registration error', error);
+    const [needRefresh, setNeedRefresh] = useState(false);
+    const [registration, setRegistration] = useState(null);
+
+    useEffect(() => {
+        // Only run in production or when service worker is available
+        if ('serviceWorker' in navigator) {
+            // Check for updates periodically
+            const checkForUpdates = async () => {
+                try {
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    if (reg) {
+                        setRegistration(reg);
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        setNeedRefresh(true);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.log('Service worker check failed:', error);
+                }
+            };
+
+            checkForUpdates();
         }
-    });
+    }, []);
 
     const handleUpdate = () => {
-        updateServiceWorker(true);
+        if (registration && registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        window.location.reload();
     };
 
     const dismissUpdate = () => {

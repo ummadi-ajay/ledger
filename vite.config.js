@@ -2,15 +2,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Use /ledger/ for production (GitHub Pages), / for development
+const base = process.env.NODE_ENV === 'production' ? '/ledger/' : '/'
+
 export default defineConfig({
-  base: '/ledger/',
+  base: base,
 
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true
+        enabled: false  // Disable in dev to avoid caching issues
       },
       includeAssets: ['vite.svg', 'apple-touch-icon.png'],
       workbox: {

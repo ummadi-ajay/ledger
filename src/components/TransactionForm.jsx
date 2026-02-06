@@ -225,7 +225,7 @@ const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }
 
             <form onSubmit={handleSubmit} className="form-grid">
                 <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>DATE</label>
+                    <label htmlFor="date" style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>DATE</label>
                     <div style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-primary)', zIndex: 1 }}>
                             <Calendar size={14} />
@@ -235,7 +235,7 @@ const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>DESCRIPTION</label>
+                    <label htmlFor="description" style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>DESCRIPTION</label>
                     <div style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 1 }}>
                             <Pen size={14} />
@@ -245,7 +245,7 @@ const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>CATEGORY</label>
+                    <label htmlFor="category" style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>CATEGORY</label>
                     <div style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 1 }}>
                             <Tag size={14} />
@@ -258,7 +258,7 @@ const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>AMOUNT IN</label>
+                    <label htmlFor="amountIn" style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>AMOUNT IN</label>
                     <div style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--success)', zIndex: 1 }}>
                             <ArrowDown size={14} />
@@ -275,7 +275,7 @@ const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>AMOUNT OUT</label>
+                    <label htmlFor="amountOut" style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>AMOUNT OUT</label>
                     <div style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--danger)', zIndex: 1 }}>
                             <ArrowUp size={14} />
@@ -293,7 +293,7 @@ const TransactionForm = ({ onAdd, editingTransaction, onSaveEdit, onCancelEdit }
 
                 {wallets.length > 0 && (
                     <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>WALLET / METHOD</label>
+                        <label htmlFor="walletId" style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>WALLET / METHOD</label>
                         <div style={{ position: 'relative' }}>
                             <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 1 }}>
                                 <Wallet size={14} />
