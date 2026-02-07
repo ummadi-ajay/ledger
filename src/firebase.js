@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, isSupported } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -14,19 +14,22 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+let analytics = null;
+isSupported().then(supported => {
+    if (supported) analytics = getAnalytics(app);
+});
 const db = getFirestore(app);
 
-// Enable offline persistence
-enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code == 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a a time.
-        console.warn('Persistence failed: Multiple tabs open');
-    } else if (err.code == 'unimplemented') {
-        // The current browser does not support all of the features required to enable persistence
-        console.warn('Persistence failed: Browser not supported');
-    }
-});
+// Enable offline persistence only on non-native platforms for now to avoid hangs
+import { Capacitor } from '@capacitor/core';
+if (!Capacitor.isNativePlatform()) {
+    enableIndexedDbPersistence(db).catch((err) => {
+        console.warn('Persistence failed', err.code);
+    });
+} else {
+    console.log("Skipping IndexedDbPersistence on Native Platform");
+}
 const auth = getAuth(app);
 
 export { db, analytics, auth };

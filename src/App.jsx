@@ -23,11 +23,13 @@ import OfflineStatus from './components/OfflineStatus';
 import useShareTarget from './hooks/useShareTarget';
 import { requestNotificationPermission, sendLocalNotification } from './utils/notifications';
 import { ArrowUp, ArrowDown, Wallet, Layers, ChevronRight } from 'lucide-react';
+import { initCapacitor, hapticSuccess, hapticFeedback } from './utils/capacitor';
 import './App.css';
 
 // Create a wrapper component to use the Auth Context hook
 const LedgerApp = () => {
   const { currentUser } = useAuth();
+  console.log("LedgerApp: currentUser", currentUser?.uid);
 
   const {
     transactions,
@@ -37,6 +39,7 @@ const LedgerApp = () => {
     addBulkTransactions,
     loading
   } = useTransactions();
+  console.log("LedgerApp: transactions count", transactions.length, "loading", loading);
 
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [filters, setFilters] = useState({
@@ -56,16 +59,20 @@ const LedgerApp = () => {
   useEffect(() => {
     // Request notification permission on load
     requestNotificationPermission();
+    // Initialize Capacitor features
+    initCapacitor();
   }, []);
 
   const handleAddTransaction = async (data) => {
     await addTransaction(data);
+    hapticSuccess();
     sendLocalNotification("Transaction Added", `Successfully saved: ${data.description}`);
   };
 
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
 
   const handleStartEdit = (transaction) => {
+    hapticFeedback();
     setEditingTransaction(transaction);
     // Scroll to form on mobile
     window.scrollTo({ top: 0, behavior: 'smooth' });

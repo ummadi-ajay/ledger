@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X, Smartphone } from 'lucide-react';
+import { isNative } from '../utils/capacitor';
 
 const InstallPrompt = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -49,7 +50,8 @@ const InstallPrompt = () => {
         sessionStorage.setItem('pwa-prompt-dismissed', 'true');
     };
 
-    // Don't show if already installed, dismissed, or no prompt available
+    // Don't show if already installed, dismissed, running natively, or no prompt available
+    if (isNative()) return null;
     if (isStandalone) return null;
     if (sessionStorage.getItem('pwa-prompt-dismissed')) return null;
 
