@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, Delete, AlertCircle, Fingerprint } from 'lucide-react';
+import { isNative, checkBiometricSupport, performNativeBiometricAuth } from '../utils/capacitor';
 
 // Helpers for WebAuthn ID storage
 const bufferToBase64 = (buffer) => {
@@ -21,16 +22,38 @@ const AppLock = ({ onUnlock, isSettingPin = false, onPinSet }) => {
 
     // Check for biometric support on load
     useEffect(() => {
-        if (window.PublicKeyCredential && !isSettingPin) {
-            setBiometricsAvailable(true);
-            // Auto-trigger on mount if not in "set" mode
-            if (localStorage.getItem('biometrics_enabled') === 'true') {
-                handleBiometricAuth();
+        const initBiometrics = async () => {
+            if (isNative()) {
+                const support = await checkBiometricSupport();
+                if (support.isAvailable) {
+                    setBiometricsAvailable(true);
+                    if (!isSettingPin && localStorage.getItem('biometrics_enabled') === 'true') {
+                        handleBiometricAuth();
+                    }
+                }
+            } else if (window.PublicKeyCredential && !isSettingPin) {
+                // Web fallback
+                setBiometricsAvailable(true);
+                if (localStorage.getItem('biometrics_enabled') === 'true') {
+                    handleBiometricAuth();
+                }
             }
-        }
+        };
+
+        initBiometrics();
     }, []);
 
     const handleBiometricAuth = async () => {
+        if (isNative()) {
+            const success = await performNativeBiometricAuth();
+            if (success) {
+                localStorage.setItem('biometrics_enabled', 'true');
+                onUnlock();
+            }
+            return;
+        }
+
+        // WebAuthn Fallback (remain original logic for non-native)
         try {
             const isEnabled = localStorage.getItem('biometrics_enabled') === 'true';
             const savedCredId = localStorage.getItem('biometrics_id');
