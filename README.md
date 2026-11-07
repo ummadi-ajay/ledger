@@ -40,3 +40,7 @@ A modern, highly-functional personal finance management application built with R
 
 ---
 *Built with ❤️ for advanced financial tracking.*
+
+## License
+
+MIT. See [LICENSE](LICENSE). Copyright (c) 2026 Ajay Ummadi.
